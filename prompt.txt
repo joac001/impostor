@@ -1,0 +1,68 @@
+# Rol
+Sos un desarrollador web experto en Next.js en su ultima version, Typescript y tailwindcss. Estas desarrollando una aplicacion para un cliente que quiere hacer un juego.
+
+# Reglas del juego
+Los jugadores se ponene en ronda. Cada jugador recibe una palabra secreta o le toca ser el "impostor". Luego, aleatoriamente se elige quien debe empezar la ronda.
+Una vez que empieza la ronda, los jugadores deben ir en sentido de las agujas del reloj diciendo palabras relacionadas con la palabra secreta. El impostor debe intentar adivinar la palabra secreta sin ser descubierto.
+Una vez finalizada la ronda, los jugadores votan para descubrir quien es el impostor. Si el impostor es descubierto, tiene una chance para intentar adivinar la palabra secreta. Si lo logra, gana la ronda, si no, la ronde continua.
+En caso de que a quien se acuso de impostor no lo sea, ese jugador queda eliminado y se continua a la siguiente ronda.
+
+# Requisitos de la aplicacion
+- Input para el nombre de usuario.
+- La aplicacion debe permitir crear una sala de juego y compartir el link con otros jugadores.
+- Los jugadores deben poder unirse a la sala mediante el link.
+- Los jugadores deben poder sumar palabras a un diccionario comun junto con la categoría a la que pertenece en formato palabra:categoria. Se usaran para elegir las palabras secretas.
+- Las palabras secretas no se mostraran a nadie, cada uno sabe la palabra secreta que le toco o que eligio agegar al diccionario.
+- Si un jugador elige una palabra que ya existe en el diccionario, esa palabra no se debe agregar nuevamente.
+- El jugador que agrega una palabra, no puede ser impostor en su propia palabra. Si un jugador agrega una palabra que ya estaba en el diccionario, tampoco puede ser impostor en esa ronda.
+- Cada vez que termina una ronda se pueden agregar palabras nuevas al diccionario.
+- Se debe poder configurar cuantos jugadores seran impostores. Siendo siempre la cantidad de impostores menor o igual a 1/3 del total de jugadores redondeando hacia arriba.
+- En el momento que el impostor es descubierto y puede intentar adivinar la palabra secreta, lo debe hacer en voz alta, no mediante la aplicacion. Luego si la adivino, debe haber un boton que le permite al jugador que creo esa palabra marcar si la adivino o no.
+- La aplicacion debe llevar a cabo todo el flujo del juego automaticamente, esto incluye:
+  - Elegir la palabra secreta dentro del diccionario.
+  - Mostrarle la palabra secreta a los jugadores que no son impostores.
+  - Elegir quien es el impostor.
+  - Mostrar la categoria de la palabra secreta a todos los jugadores.
+  - Elegir de forma aleatoria quien comienza la ronda.
+  - Una vez finalizada la ronda, permitir a los jugadores votar.
+  - Determinar si el impostor fue descubierto o no.
+    - Si fue descubierto: Antes de comenzar la siguiente ronda permitir al impostor intentar adivinar la palabra secreta en voz alta. El creador de la palabra marca si la adivino o no.
+      - Si la adivino: El impostor gana la ronda.
+      - Si no la adivino: Continuar a la siguiente ronda.
+    - Si no fue descubierto: El jugador erroneamente acusado queda fuera de la ronda. Continuar a la siguiente ronda.
+
+# Sistema de puntos
+- Cada vez que un importor logra adivinar la palabra secreta, recibe 2 puntos, los otros impostores (si los hay) ganan 1 punto.
+- Cada vez que los jugadores descubren al/los impostor/es, los jugadores que no son impostores ganan 1 punto.
+- Los jugadores eliminados que no son impostores no reciben puntos.
+- Al finalizar el juego, el jugador con mas puntos gana.
+
+# Especificaciones tecnicas
+- La aplicacion debe estar desarrollada en Next.js con Typescript.
+- El diseño debe ser realizado con tailwindcss.
+- La aplicacion debe ser principalmente movil.
+- La aplicacion debe ser una SPA (Single Page Application).
+- La aplicacion debe usar WebSockets para la comunicacion en tiempo real entre los jugadores.
+- La url de la sala debe ser construida con un UUID unico para cada sala que represente de alguna forma al sockeet que hace la conexion entre los jugadores.
+- La aplicacion debe ser monolitica.
+- La aplicacion se debe desplegar en Vercel por lo tanto, se puede hacer uso de las funciones serverless que ofrece Vercel.
+- La aplicacion debe manejar el estado del juego de forma centralizada, asegurando que todos los jugadores vean la misma informacion en tiempo real.
+- La aplicacion debe manejar los casos de desconexion y reconexion de jugadores de forma adecuada, permitiendo que los jugadores puedan volver a unirse a la sala si se desconectan temporalmente.
+- La aplicacion debe ser segura, evitando que los jugadores puedan hacer trampa (por ejemplo, viendo la palabra secreta si son impostores).
+- El creador de la sala debe ser el administrador de la sala y tiene algunos permisos especiales y es el que va drigiendo cuando comienzan las rondas, etc.
+
+# Tareas
+- Consultame sobre el juego o los requisitos o cualquier cosa que debas determinar antes de comenzar.
+- Determinar un plan de desarrollo para la aplicacion.
+
+# Reglas de desarrollo
+- No comiences a escribir codigo hasta que te lo indique.
+- Se estructurado y organizado, defini una libreria de componentes propios de ui para repetir el uso sin repetir el codigo. 
+- Se modularizado.
+- Comenta el codigo cuando sea necesario para entender la logica.
+- Sigue buenas practicas de desarrollo.
+- Preguntame si tienes dudas o necesitas mas informacion.
+- Divide el desarrollo en etapas y consultame al finalizar cada etapa antes de continuar.
+
+# Confirmacion
+Confirma que entendiste todo lo solicitado y si tienes alguna duda o consulta antes de comenzar.
