@@ -53,19 +53,28 @@ const PlayerList = ({
         return (
           <div
             key={p.id}
-            className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2"
+            className={`flex items-center justify-between rounded-xl border px-3 py-2 transition-all ${
+              isCurrent 
+                ? "border-emerald-500/50 bg-emerald-500/10" 
+                : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+            }`}
           >
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-900">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                index === 0 ? "bg-amber-500 text-amber-950" :
+                index === 1 ? "bg-slate-400 text-slate-900" :
+                index === 2 ? "bg-amber-700 text-amber-100" :
+                "bg-slate-700 text-slate-300"
+              }`}>
                 {index + 1}
               </div>
               <div>
-                <p className="text-sm font-semibold text-zinc-900">
+                <p className="text-sm font-semibold text-slate-100">
                   {p.isAdmin ? "👑 " : null}
                   {p.nickname}{" "}
-                  {isCurrent ? <span className="text-xs text-indigo-600">(vos)</span> : null}
+                  {isCurrent ? <span className="text-xs text-emerald-400">(vos)</span> : null}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-slate-400">
                   {p.connected ? "🟢" : "⚪"} {p.points} pts
                 </p>
               </div>
@@ -112,12 +121,12 @@ const DictionarySection = ({
 
   return (
     <Card title="Diccionario">
-      <div className="rounded-xl bg-indigo-50 p-3 mb-3">
-        <p className="text-sm text-indigo-700">
+      <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 mb-3">
+        <p className="text-sm text-emerald-300">
           Agregá palabras con categorías. Solo vos podés ver tus palabras 
           (así no sabés las posibles palabras secretas de otros).
         </p>
-        <p className="text-xs text-indigo-600 mt-1">
+        <p className="text-xs text-emerald-400/70 mt-1">
           Si tu palabra es elegida, no podrás ser impostor en esa ronda.
         </p>
       </div>
@@ -138,7 +147,7 @@ const DictionarySection = ({
         <Button onClick={handleAdd}>Agregar</Button>
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-sm text-zinc-600">
+      <div className="mt-3 flex items-center justify-between text-sm text-slate-400">
         <span>Tus palabras: {myEntries.length}</span>
         <span>Total en el diccionario: {totalWords}</span>
       </div>
@@ -148,10 +157,10 @@ const DictionarySection = ({
           {myEntries.map((w) => (
             <div
               key={w.normalized}
-              className="rounded-xl border border-zinc-200 px-3 py-2"
+              className="rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2"
             >
-              <p className="text-sm font-semibold text-zinc-900">{w.word}</p>
-              <p className="text-xs text-zinc-500">Categoría: {w.category}</p>
+              <p className="text-sm font-semibold text-slate-100">{w.word}</p>
+              <p className="text-xs text-slate-400">Categoría: {w.category}</p>
             </div>
           ))}
         </div>
@@ -299,8 +308,8 @@ ${window.location.origin}/?room=${roomId}`;
     return (
       <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
         <Card className="max-w-md">
-          <h1 className="text-xl font-semibold text-zinc-900">Entrar a la sala</h1>
-          <p className="text-sm text-zinc-500">
+          <h1 className="text-xl font-semibold text-slate-100">Entrar a la sala</h1>
+          <p className="text-sm text-slate-400">
             Ingresá tu apodo para unirte a la sala.
           </p>
           <Input
@@ -321,16 +330,16 @@ ${window.location.origin}/?room=${roomId}`;
   // Main room view
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 bg-white px-4 py-6">
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 bg-[#0f1419] px-4 py-6">
       {/* Header */}
       <header className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-900">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white shadow-lg shadow-emerald-500/30">
               {currentPlayer?.nickname.slice(0, 1).toUpperCase() ?? "?"}
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-900">
+              <p className="text-sm font-semibold text-slate-100">
                 {currentPlayer?.nickname ?? nickname}
               </p>
               <div className="flex items-center gap-2">
@@ -339,7 +348,7 @@ ${window.location.origin}/?room=${roomId}`;
                 ) : (
                   <Badge variant="neutral">Jugador</Badge>
                 )}
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-slate-400">
                   {status === "connected" ? "🟢 Conectado" : "🟡 " + status}
                 </span>
               </div>
@@ -373,7 +382,7 @@ ${window.location.origin}/?room=${roomId}`;
             variant="ghost"
             size="sm"
             onClick={() => setShowLeaveModal(true)}
-            className="flex-1 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            className="flex-1 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
           >
             <LogOut className="mr-1 h-4 w-4" />
             Abandonar sala
@@ -384,7 +393,7 @@ ${window.location.origin}/?room=${roomId}`;
       {/* Loading state */}
       {!room ? (
         <Card>
-          <p className="text-sm text-zinc-600">Conectando a la sala...</p>
+          <p className="text-sm text-slate-400">Conectando a la sala...</p>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -399,8 +408,8 @@ ${window.location.origin}/?room=${roomId}`;
                   🗳️ Abrir votación
                 </Button>
               ) : (
-                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-center">
-                  <p className="text-sm text-amber-700">
+                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-center">
+                  <p className="text-sm text-amber-400">
                     Esperando que el admin abra la votación...
                   </p>
                 </div>
@@ -429,10 +438,10 @@ ${window.location.origin}/?room=${roomId}`;
               {isAdmin ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-zinc-800">
+                    <label className="text-sm font-medium text-slate-200">
                       Cantidad de impostores
                     </label>
-                    <p className="text-xs text-zinc-500 mb-2">
+                    <p className="text-xs text-slate-400 mb-2">
                       Máximo {maxImpostors} (1 cada 3 jugadores)
                     </p>
                     <div className="flex items-center gap-2">
@@ -446,7 +455,7 @@ ${window.location.origin}/?room=${roomId}`;
                         }
                         className="w-24"
                       />
-                      <span className="text-sm text-zinc-600">
+                      <span className="text-sm text-slate-400">
                         impostor{room.config.impostorCount !== 1 ? "es" : ""}
                       </span>
                     </div>
@@ -459,13 +468,13 @@ ${window.location.origin}/?room=${roomId}`;
                     Iniciar ronda
                   </Button>
                   {room.dictionaryCount === 0 ? (
-                    <p className="text-xs text-amber-600">
+                    <p className="text-xs text-amber-400">
                       Agregá al menos una palabra al diccionario para comenzar.
                     </p>
                   ) : null}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-slate-400">
                   Esperando que el administrador inicie la ronda...
                 </p>
               )}

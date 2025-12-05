@@ -8,14 +8,14 @@ type ButtonSize = "sm" | "md" | "lg" | "full";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:outline-indigo-600",
+    "bg-emerald-500 text-white hover:bg-emerald-400 focus-visible:outline-emerald-500 shadow-lg shadow-emerald-500/25",
   secondary:
-    "bg-zinc-900 text-white hover:bg-zinc-800 focus-visible:outline-zinc-900",
+    "bg-slate-700 text-white hover:bg-slate-600 focus-visible:outline-slate-600",
   ghost:
-    "border border-zinc-300 text-zinc-900 hover:bg-zinc-100 focus-visible:outline-zinc-500",
-  subtle: "bg-zinc-100 text-zinc-900 hover:bg-zinc-200",
+    "border border-slate-600 text-slate-200 hover:bg-slate-800 hover:border-emerald-500/50 focus-visible:outline-slate-500",
+  subtle: "bg-slate-800 text-slate-200 hover:bg-slate-700",
   danger:
-    "bg-rose-600 text-white hover:bg-rose-700 focus-visible:outline-rose-600",
+    "bg-rose-600 text-white hover:bg-rose-500 focus-visible:outline-rose-600 shadow-lg shadow-rose-500/25",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -38,7 +38,7 @@ export const Button = ({
 }: Props) => (
   <button
     className={clsx(
-      "inline-flex items-center justify-center rounded-xl font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+      "inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]",
       variantClasses[variant],
       sizeClasses[size],
       className,

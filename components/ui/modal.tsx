@@ -49,20 +49,20 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-sm animate-in fade-in zoom-in-95 rounded-2xl bg-white p-5 shadow-xl"
+        className="w-full max-w-sm animate-in fade-in zoom-in-95 rounded-2xl border border-slate-700 bg-slate-800 p-5 shadow-2xl"
         role="dialog"
         aria-modal="true"
       >
-        <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
+        <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
         {description ? (
-          <p className="mt-2 text-sm text-zinc-600">{description}</p>
+          <p className="mt-2 text-sm text-slate-400">{description}</p>
         ) : null}
         <div className="mt-5 flex gap-3">
           <Button variant="ghost" size="full" onClick={onClose}>
@@ -74,11 +74,7 @@ export function Modal({
               onConfirm();
               onClose();
             }}
-            className={
-              variant === "danger"
-                ? "bg-rose-600 hover:bg-rose-700 text-white"
-                : ""
-            }
+            variant={variant === "danger" ? "danger" : "primary"}
           >
             {confirmText}
           </Button>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findPlayerBySession } from "@/lib/game/engine";
+import { findPlayerBySession, transferAdmin } from "@/lib/game/engine";
 import { getRoom, saveRoom } from "@/lib/server/redis";
 
 /**
@@ -29,6 +29,11 @@ export async function POST(request: Request) {
     if (!player) {
       // Si el jugador no existe, consideramos que ya abandonó
       return NextResponse.json({ left: true });
+    }
+
+    // Si el jugador es admin, transferir a otro
+    if (player.isAdmin) {
+      transferAdmin(room, player.id);
     }
 
     // Marcar como desconectado

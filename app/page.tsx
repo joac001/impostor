@@ -37,21 +37,22 @@ export default function Home() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-6 bg-gradient-to-b from-indigo-50 via-white to-white px-5 py-10">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-bold text-white">
-          IM
+    <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-6 bg-[#0f1419] px-5 py-10">
+      {/* Logo header */}
+      <div className="flex flex-col items-center gap-4 py-6">
+        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500 text-3xl font-bold text-white shadow-lg shadow-emerald-500/30 animate-float">
+          🎭
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">Impostor</h1>
-          <p className="text-sm text-zinc-500">El juego de deducción social</p>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-emerald-400">Impostor</h1>
+          <p className="text-sm text-slate-500 mt-1">El juego de deducción social</p>
         </div>
       </div>
 
       <Card>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-zinc-800">Tu apodo</label>
+            <label className="text-sm font-medium text-slate-200">Tu apodo</label>
             <Input
               placeholder="Ej: Valeria"
               value={nickname}
@@ -68,18 +69,18 @@ export default function Home() {
           </div>
 
           {hasRoomCode ? (
-            <div className="rounded-xl bg-indigo-50 p-3">
-              <p className="text-sm text-indigo-700">
+            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3">
+              <p className="text-sm text-emerald-400">
                 Te invitaron a unirte a una sala
               </p>
             </div>
           ) : (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-slate-500">
               Creá una sala y compartí el link con tus amigos para jugar.
             </p>
           )}
 
-          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+          {error ? <p className="text-sm text-rose-400">{error}</p> : null}
 
           {hasRoomCode ? (
             <Button onClick={handleJoin} size="full">
@@ -92,6 +93,11 @@ export default function Home() {
           )}
         </div>
       </Card>
+
+      {/* Footer */}
+      <footer className="text-center text-xs text-slate-600">
+        <p>Mínimo 3 jugadores para iniciar</p>
+      </footer>
     </main>
   );
 }

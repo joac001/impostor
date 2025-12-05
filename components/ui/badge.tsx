@@ -3,13 +3,14 @@
 import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 
-type Variant = "neutral" | "success" | "danger" | "warning";
+type Variant = "neutral" | "success" | "danger" | "warning" | "primary";
 
 const colors: Record<Variant, string> = {
-  neutral: "bg-zinc-100 text-zinc-800",
-  success: "bg-emerald-100 text-emerald-800",
-  danger: "bg-rose-100 text-rose-800",
-  warning: "bg-amber-100 text-amber-800",
+  neutral: "bg-slate-700 text-slate-200",
+  success: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+  danger: "bg-rose-500/20 text-rose-400 border border-rose-500/30",
+  warning: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+  primary: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
 };
 
 type Props = PropsWithChildren<{ variant?: Variant; className?: string }>;

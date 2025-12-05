@@ -11,14 +11,13 @@ export interface Player {
   points: number;
   isAdmin: boolean;
   lastHeartbeat: number;
-  blockedForImpostor: boolean;
 }
 
 export interface WordEntry {
   word: string;
   normalized: string;
   category: string;
-  authorId: string;
+  authorIds: string[]; // Puede tener múltiples autores si la palabra se repite
   createdAt: number;
 }
 
@@ -46,7 +45,7 @@ export interface RoundState {
   phase: RoundPhase;
   secretWord: string;
   category: string;
-  wordAuthorId: string;
+  wordAuthorIds: string[]; // Autores de la palabra (pueden ser varios si hubo duplicado)
   impostorIds: string[];
   starterId: string;
   votes: Vote[];

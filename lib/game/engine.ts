@@ -59,7 +59,7 @@ export const toPublicRoom = (
 ): PublicRoomState => {
   // Filtrar diccionario: cada jugador solo ve sus propias palabras
   const viewerDictionary = Object.fromEntries(
-    Object.entries(room.dictionary).filter(([, entry]) => entry.authorId === viewerId)
+    Object.entries(room.dictionary).filter(([, entry]) => entry.authorIds.includes(viewerId))
   );
 
   return {
@@ -94,7 +94,6 @@ export const createRoom = (
     points: 0,
     isAdmin: true,
     lastHeartbeat: now(),
-    blockedForImpostor: false,
   };
 
   const room: RoomState = {
@@ -124,7 +123,6 @@ export const addPlayer = (room: RoomState, nickname: string): Player => {
     points: 0,
     isAdmin: false,
     lastHeartbeat: now(),
-    blockedForImpostor: false,
   };
   room.players[player.id] = player;
   return player;
@@ -148,6 +146,36 @@ export const markDisconnected = (player?: Player) => {
   player.status = "disconnected";
 };
 
+/**
+ * Transfiere el rol de admin a otro jugador conectado.
+ * Retorna true si se transfirió exitosamente, false si no hay candidatos.
+ */
+export const transferAdmin = (room: RoomState, leavingPlayerId: string): boolean => {
+  const leavingPlayer = room.players[leavingPlayerId];
+  if (!leavingPlayer?.isAdmin) return false;
+
+  // Buscar otro jugador conectado para ser admin
+  const candidates = Object.values(room.players).filter(
+    (p) => p.id !== leavingPlayerId && p.connected && p.status !== "disconnected"
+  );
+
+  if (candidates.length === 0) {
+    // No hay nadie más, el admin se va y la sala queda vacía
+    return false;
+  }
+
+  // Ordenar por antiguedad (menor lastHeartbeat = más antiguo conectado)
+  // O simplemente tomar el primero disponible
+  const newAdmin = candidates[0];
+  
+  // Transferir admin
+  leavingPlayer.isAdmin = false;
+  newAdmin.isAdmin = true;
+  room.adminId = newAdmin.id;
+
+  return true;
+};
+
 export const updateConfig = (room: RoomState, impostorCount: number) => {
   const activeCount = activePlayers(room).length;
   const max = Math.max(1, Math.ceil(activeCount / 3));
@@ -159,18 +187,27 @@ export const addWord = (
   playerId: string,
   word: string,
   category: string,
-): { added: boolean; entry?: WordEntry } => {
+): { added: boolean; entry?: WordEntry; isDuplicate?: boolean } => {
   const normalized = normalizeWord(word);
-  if (room.dictionary[normalized]) {
-    const player = room.players[playerId];
-    if (player) player.blockedForImpostor = true;
-    return { added: false };
+  const existing = room.dictionary[normalized];
+  
+  // Si ya existe la palabra
+  if (existing) {
+    // Si este jugador ya es autor, no hacer nada
+    if (existing.authorIds.includes(playerId)) {
+      return { added: false };
+    }
+    // Agregar como co-autor (la palabra ya existe, solo agregamos el autor)
+    existing.authorIds.push(playerId);
+    return { added: true, entry: existing, isDuplicate: true };
   }
+  
+  // Palabra nueva
   const entry: WordEntry = {
     word: word.trim(),
     normalized,
     category: category.trim(),
-    authorId: playerId,
+    authorIds: [playerId],
     createdAt: now(),
   };
   room.dictionary[normalized] = entry;
@@ -180,9 +217,9 @@ export const addWord = (
 const eligibleForRound = (room: RoomState) =>
   Object.values(room.players).filter((p) => p.status === "active");
 
-const computeImpostors = (room: RoomState, authorId: string) => {
+const computeImpostors = (room: RoomState, authorIds: string[]) => {
   const players = eligibleForRound(room).filter(
-    (p) => p.id !== authorId && !p.blockedForImpostor,
+    (p) => !authorIds.includes(p.id),
   );
   const maxAllowed = Math.max(1, Math.ceil(players.length / 3));
   const impostorCount = clamp(room.config.impostorCount, 1, maxAllowed);
@@ -190,10 +227,11 @@ const computeImpostors = (room: RoomState, authorId: string) => {
   return shuffled.slice(0, impostorCount).map((p) => p.id);
 };
 
-const pickSecretWord = (room: RoomState) => {
-  const words = Object.values(room.dictionary);
-  if (!words.length) throw new Error("No hay palabras en el diccionario");
-  return pickRandom(words);
+const pickSecretWord = (room: RoomState): { entry: WordEntry; key: string } => {
+  const entries = Object.entries(room.dictionary);
+  if (!entries.length) throw new Error("No hay palabras en el diccionario");
+  const [key, entry] = pickRandom(entries);
+  return { entry, key };
 };
 
 export const startRound = (room: RoomState): RoundState => {
@@ -202,8 +240,11 @@ export const startRound = (room: RoomState): RoundState => {
     throw new Error("Se necesitan al menos 3 jugadores activos");
   }
 
-  const secret = pickSecretWord(room);
-  const impostorIds = computeImpostors(room, secret.authorId);
+  const { entry: secret, key: secretKey } = pickSecretWord(room);
+  // Eliminar la palabra usada del diccionario para que no se repita
+  delete room.dictionary[secretKey];
+  
+  const impostorIds = computeImpostors(room, secret.authorIds);
   // Elegir quién empieza aleatoriamente
   const starterId = pickRandom(participants).id;
 
@@ -212,7 +253,7 @@ export const startRound = (room: RoomState): RoundState => {
     phase: "clues",
     secretWord: secret.word,
     category: secret.category,
-    wordAuthorId: secret.authorId,
+    wordAuthorIds: secret.authorIds,
     impostorIds,
     starterId,
     votes: [],
@@ -222,11 +263,6 @@ export const startRound = (room: RoomState): RoundState => {
     winner: undefined,
     createdAt: now(),
   };
-
-  // liberar bloqueos de duplicados para la siguiente ronda
-  Object.values(room.players).forEach((p) => {
-    if (p.blockedForImpostor) p.blockedForImpostor = false;
-  });
 
   room.round = round;
   room.status = "in_round";
@@ -506,7 +542,8 @@ export const finalizeImpostorWinsBySurvival = (
     roundId: round.id,
     winner: round.winner,
     accusedId: round.accusedId,
-    impostorGuessSuccess: false,
+    // No hubo adivinanza - ganó por supervivencia
+    impostorGuessSuccess: undefined,
     pointsAwarded,
   };
 
