@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -175,7 +175,7 @@ const DictionarySection = ({
 export default function RoomPage() {
   const params = useParams();
   const router = useRouter();
-  const search = useSearchParams();
+  const search = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const roomId = params?.roomId?.toString() ?? "";
   const mode = (search?.get("mode") as "create" | "join") ?? "join";
   const nickFromQuery = search?.get("nickname") ?? "";
@@ -273,14 +273,11 @@ ${window.location.origin}/?room=${roomId}`;
 
   const handleOpenVoting = async () => {
     if (!api) return;
-    console.log('[room page] handleOpenVoting invoked');
     try {
       setOpeningVote(true);
-      const res = await api.openVoting();
-      console.log('[room page] api.openVoting result:', res);
+      await api.openVoting();
     } catch (err) {
       console.error('[room page] Error opening voting:', err);
-      alert(err instanceof Error ? err.message : 'Error al reabrir votación');
     } finally {
       setOpeningVote(false);
     }

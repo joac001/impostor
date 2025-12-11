@@ -108,6 +108,8 @@ export interface PublicRoundState {
   impostorIds?: string[];
   // Resultado de la última votación (para mostrar)
   lastVoteResult?: VoteResult;
+  // Indica si la votación está abierta (útil para reabrir revotes)
+  votingOpen?: boolean;
   // Cantidad de votos recibidos (para saber cuántos faltan)
   totalVotesReceived: number;
   totalVotesNeeded: number;

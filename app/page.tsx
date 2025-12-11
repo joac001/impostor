@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const router = useRouter();
-  const search = useSearchParams();
+  const search = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const prefillRoom = search?.get("room") ?? "";
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState<string | null>(null);

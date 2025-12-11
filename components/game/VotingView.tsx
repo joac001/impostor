@@ -39,7 +39,7 @@ export function VotingView({ room, currentId, onVote, hasVoted, votedFor, onOpen
     }
 
     return players;
-  }, [room.players, currentId, isRevote, round?.revoteCandidates, round?.revoteTargets, round]);
+  }, [room.players, currentId, isRevote, round?.revoteCandidates, (round as any)?.revoteTargets, round]);
 
   if (!round) return null;
 
@@ -114,19 +114,14 @@ export function VotingView({ room, currentId, onVote, hasVoted, votedFor, onOpen
                 <div className="flex gap-3">
                   <Button
                     onClick={async () => {
-                      console.log('[VotingView] Reabrir votación clicked');
-                      // Feedback to quickly confirm the click reached the client
-                      try { alert('Reabrir votación: enviando petición...'); } catch {}
                       if (!onOpenVoting) {
                         console.warn('[VotingView] onOpenVoting not provided');
                         return;
                       }
                       try {
                         await onOpenVoting();
-                        console.log('[VotingView] onOpenVoting resolved');
                       } catch (err) {
                         console.error('[VotingView] Reopen voting failed:', err);
-                        alert(err instanceof Error ? err.message : 'Error al reabrir votación');
                       }
                     }}
                   >
