@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import type { PublicRoomState } from "@/lib/types/game";
 
 interface VotingViewProps {
@@ -9,9 +10,10 @@ interface VotingViewProps {
   onVote: (targetId: string) => void;
   hasVoted: boolean;
   votedFor: string | null;
+  onOpenVoting?: () => void;
 }
 
-export function VotingView({ room, currentId, onVote, hasVoted, votedFor }: VotingViewProps) {
+export function VotingView({ room, currentId, onVote, hasVoted, votedFor, onOpenVoting }: VotingViewProps) {
   const round = room.round;
   const currentPlayer = room.players[currentId];
   const isEliminated = currentPlayer?.status === "benched";
@@ -23,14 +25,21 @@ export function VotingView({ room, currentId, onVote, hasVoted, votedFor }: Voti
     const players = Object.values(room.players).filter(
       (p) => p.status === "active" && p.id !== currentId
     );
-    
-    // En revote, solo los candidatos
-    if (isRevote && round.revoteCandidates.length > 0) {
-      return players.filter((p) => round.revoteCandidates.includes(p.id));
+
+    // En revote, solo los candidatos. El servidor puede exponerlos como
+    // `revoteCandidates` o `revoteTargets` (legacy), así que aceptamos ambos.
+    const revoteCandidates = Array.isArray((round as any).revoteCandidates)
+      ? (round as any).revoteCandidates
+      : Array.isArray((round as any).revoteTargets)
+      ? (round as any).revoteTargets
+      : [];
+
+    if (isRevote && revoteCandidates.length > 0) {
+      return players.filter((p) => revoteCandidates.includes(p.id));
     }
-    
+
     return players;
-  }, [room.players, currentId, isRevote, round]);
+  }, [room.players, currentId, isRevote, round?.revoteCandidates, round?.revoteTargets, round]);
 
   if (!round) return null;
 
@@ -57,6 +66,76 @@ export function VotingView({ room, currentId, onVote, hasVoted, votedFor }: Voti
             <p className="text-sm text-slate-400">
               Votos: {round.totalVotesReceived}/{round.totalVotesNeeded}
             </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Si estamos en revote pero la votación no está abierta, mostrar pantalla de espera
+  const isVotingOpen = Boolean((round as any).votingOpen);
+  const revoteCandidates = Array.isArray((round as any).revoteCandidates)
+    ? (round as any).revoteCandidates
+    : Array.isArray((round as any).revoteTargets)
+    ? (round as any).revoteTargets
+    : [];
+
+  if (isRevote && !isVotingOpen) {
+    // Mostrar pantalla que indica que se debe hacer revotación, con conteos
+    const counts: Record<string, number> = round.lastVoteResult?.voteCount ?? {};
+    const isAdmin = room.adminId === currentId;
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-[#0f1419]">
+        <header className="border-b border-slate-700 bg-slate-800/50 px-4 py-4">
+          <h1 className="text-2xl font-bold text-amber-400">🔄 Revotación necesaria</h1>
+          <p className="text-sm text-slate-400 mt-1">Hubo empate. Revisá los votos de los candidatos y reabrí la votación cuando estés listo.</p>
+        </header>
+
+        <main className="flex-1 overflow-auto px-4 py-6">
+          <div className="max-w-xl mx-auto">
+            <div className="mb-4 text-sm text-slate-400">Candidatos en revotación:</div>
+            <div className="space-y-3">
+              {revoteCandidates.length === 0 && (
+                <p className="text-sm text-slate-500">No hay candidatos disponibles.</p>
+              )}
+              {revoteCandidates.map((id: string) => (
+                <div key={id} className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3">
+                  <div>
+                    <p className="font-semibold text-slate-100">{room.players[id]?.nickname ?? id}</p>
+                    <p className="text-xs text-slate-400">{(counts[id] ?? 0)} votos</p>
+                  </div>
+                  <div className="text-slate-400 text-sm">{room.players[id]?.points ?? 0} pts</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              {isAdmin && (
+                <div className="flex gap-3">
+                  <Button
+                    onClick={async () => {
+                      console.log('[VotingView] Reabrir votación clicked');
+                      // Feedback to quickly confirm the click reached the client
+                      try { alert('Reabrir votación: enviando petición...'); } catch {}
+                      if (!onOpenVoting) {
+                        console.warn('[VotingView] onOpenVoting not provided');
+                        return;
+                      }
+                      try {
+                        await onOpenVoting();
+                        console.log('[VotingView] onOpenVoting resolved');
+                      } catch (err) {
+                        console.error('[VotingView] Reopen voting failed:', err);
+                        alert(err instanceof Error ? err.message : 'Error al reabrir votación');
+                      }
+                    }}
+                  >
+                    Reabrir votación
+                  </Button>
+                </div>
+              )}
+              <div className="mt-4 text-sm text-slate-400">Esperando a que el admin reabra la votación...</div>
+            </div>
           </div>
         </main>
       </div>

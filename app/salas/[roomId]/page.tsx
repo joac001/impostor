@@ -181,10 +181,11 @@ export default function RoomPage() {
   const nickFromQuery = search?.get("nickname") ?? "";
   
   const [nickname, setNickname] = useState(nickFromQuery);
-  const [voteTarget, setVoteTarget] = useState<string | null>(null);
+  // local optimistic vote state removed — rely exclusively on server state
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [openingVote, setOpeningVote] = useState(false);
 
   const ready = nickname.trim().length > 0;
   const { room, playerId, api, status } = useRoomPolling({
@@ -204,33 +205,26 @@ export default function RoomPage() {
     return Math.max(1, Math.ceil(count / 3));
   }, [room]);
 
-  // Resetear voto cuando cambia de fase
-  const currentPhase = room?.round?.phase;
-  const roundId = room?.round?.id;
-  useEffect(() => {
-    if (currentPhase === "vote" || currentPhase === "revote") {
-      setVoteTarget(null);
-    }
-  }, [currentPhase, roundId]);
+  // No local vote reset effect — UI is server-driven
 
   // Determinar si ya votamos en esta fase (basado en datos del servidor)
-  const hasVotedFromServer = useMemo(() => {
+  const hasVotedFromServer = (() => {
     if (!room?.round || !playerId) return false;
     const isRevote = room.round.phase === "revote";
     return room.round.votes.some(
       (v) => v.voterId === playerId && v.isRevote === isRevote
     );
-  }, [room?.round, playerId]);
+  })();
 
   // Obtener a quién votamos desde el servidor
-  const votedForFromServer = useMemo(() => {
+  const votedForFromServer = (() => {
     if (!room?.round || !playerId) return null;
     const isRevote = room.round.phase === "revote";
     const vote = room.round.votes.find(
       (v) => v.voterId === playerId && v.isRevote === isRevote
     );
     return vote?.targetId ?? null;
-  }, [room?.round, playerId]);
+  })();
 
   // ─────────────────────────────────────────────────────────────────────────
   // Handlers
@@ -270,7 +264,6 @@ ${window.location.origin}/?room=${roomId}`;
   };
 
   const handleVote = (id: string) => {
-    setVoteTarget(id);
     api?.vote(id, room?.round?.phase === "revote");
   };
 
@@ -278,8 +271,19 @@ ${window.location.origin}/?room=${roomId}`;
     api?.markImpostorGuess(success);
   };
 
-  const handleOpenVoting = () => {
-    api?.openVoting();
+  const handleOpenVoting = async () => {
+    if (!api) return;
+    console.log('[room page] handleOpenVoting invoked');
+    try {
+      setOpeningVote(true);
+      const res = await api.openVoting();
+      console.log('[room page] api.openVoting result:', res);
+    } catch (err) {
+      console.error('[room page] Error opening voting:', err);
+      alert(err instanceof Error ? err.message : 'Error al reabrir votación');
+    } finally {
+      setOpeningVote(false);
+    }
   };
 
   const handleContinueAfterResult = () => {
@@ -388,6 +392,23 @@ ${window.location.origin}/?room=${roomId}`;
             Abandonar sala
           </Button>
         </div>
+        {/* Admin quick start button (visible below action buttons for accessibility) */}
+        {isAdmin && !room?.round ? (
+          <div className="mt-2">
+            <Button
+              onClick={handleStart}
+              size="full"
+              disabled={room?.dictionaryCount === 0}
+            >
+              Iniciar ronda
+            </Button>
+            {room?.dictionaryCount === 0 ? (
+              <p className="mt-2 text-xs text-amber-400">
+                No hay palabras en el diccionario. Agregá al menos una para iniciar.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </header>
 
       {/* Loading state */}
@@ -404,8 +425,8 @@ ${window.location.origin}/?room=${roomId}`;
               
               {/* Botón de abrir votación para admin */}
               {isAdmin ? (
-                <Button onClick={handleOpenVoting} size="full">
-                  🗳️ Abrir votación
+                <Button onClick={handleOpenVoting} size="full" disabled={openingVote}>
+                  {openingVote ? 'Abriendo votación...' : '🗳️ Abrir votación'}
                 </Button>
               ) : (
                 <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-center">
@@ -442,7 +463,7 @@ ${window.location.origin}/?room=${roomId}`;
                       Cantidad de impostores
                     </label>
                     <p className="text-xs text-slate-400 mb-2">
-                      Máximo {maxImpostors} (1 cada 3 jugadores)
+                      Máximo {maxImpostors} impostores.
                     </p>
                     <div className="flex items-center gap-2">
                       <Input
@@ -453,25 +474,12 @@ ${window.location.origin}/?room=${roomId}`;
                         onChange={(e) =>
                           handleImpostorCountChange(Number(e.target.value))
                         }
-                        className="w-24"
                       />
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-slate-400 w-[25%]">
                         impostor{room.config.impostorCount !== 1 ? "es" : ""}
                       </span>
                     </div>
                   </div>
-                  <Button
-                    onClick={handleStart}
-                    disabled={room.dictionaryCount === 0}
-                    size="full"
-                  >
-                    Iniciar ronda
-                  </Button>
-                  {room.dictionaryCount === 0 ? (
-                    <p className="text-xs text-amber-400">
-                      Agregá al menos una palabra al diccionario para comenzar.
-                    </p>
-                  ) : null}
                 </div>
               ) : (
                 <p className="text-sm text-slate-400">
@@ -524,8 +532,9 @@ ${window.location.origin}/?room=${roomId}`;
           room={room}
           currentId={playerId ?? ""}
           onVote={handleVote}
-          hasVoted={hasVotedFromServer || voteTarget !== null}
-          votedFor={votedForFromServer ?? voteTarget}
+          hasVoted={hasVotedFromServer}
+          votedFor={votedForFromServer}
+          onOpenVoting={handleOpenVoting}
         />
       ) : null}
 

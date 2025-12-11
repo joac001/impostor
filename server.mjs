@@ -48,7 +48,7 @@ const createPlayer = (nickname, isAdmin = false) => ({
   sessionToken: shortId(),
   nickname,
   isAdmin,
-  score: 0,
+  points: 0,
   isConnected: true,
   isEliminated: false,
   isKicked: false,
@@ -261,11 +261,11 @@ const resolveImpostorGuess = (room, success) => {
 
   if (success) {
     // El impostor adivinó: 2 puntos para él, 1 para otros impostores
-    room.players[impostorId].score += 2;
+    room.players[impostorId].points += 2;
     room.round.impostorIds
       .filter((id) => id !== impostorId)
       .forEach((id) => {
-        if (room.players[id]) room.players[id].score += 1;
+        if (room.players[id]) room.players[id].points += 1;
       });
   } else {
     // El impostor no adivinó: 1 punto para no-impostores activos
@@ -277,7 +277,7 @@ const resolveImpostorGuess = (room, success) => {
           !room.round.impostorIds.includes(p.id)
       )
       .forEach((p) => {
-        p.score += 1;
+        p.points += 1;
       });
   }
 
@@ -314,7 +314,7 @@ const finalizeNonDiscoveredRound = (room) => {
     // Los impostores ganan
     room.round?.impostorIds.forEach((id) => {
       if (room.players[id] && !room.players[id].isEliminated) {
-        room.players[id].score += 2;
+        room.players[id].points += 2;
       }
     });
     room.status = 'lobby';
@@ -357,7 +357,7 @@ const toPublicRoom = (room, viewerId) => {
           id: p.id,
           nickname: p.nickname,
           isAdmin: p.isAdmin,
-          score: p.score,
+          points: p.points,
           isConnected: p.isConnected,
           isEliminated: p.isEliminated,
           isKicked: p.isKicked,
@@ -384,6 +384,7 @@ const toPublicRoom = (room, viewerId) => {
           impostorGuessPending: room.round.impostorGuessPending,
           discoveredImpostorId: room.round.discoveredImpostorId,
           canMarkGuess: room.round.impostorGuessPending && viewer?.isAdmin,
+          lastVoteResult: room.round.lastVoteResult ?? null,
         }
       : null,
     roundNumber: room.roundNumber,

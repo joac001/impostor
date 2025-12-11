@@ -13,6 +13,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { roomId, sessionToken } = body;
+    console.log('[api/open-vote] POST received', { roomId, sessionToken: !!sessionToken });
 
     if (!roomId || !sessionToken) {
       return NextResponse.json(
@@ -47,15 +48,50 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!room.round || room.round.phase !== "clues") {
+    if (!room.round) {
+      return NextResponse.json(
+        { error: "No hay ronda activa" },
+        { status: 400 }
+      );
+    }
+
+    // Permitir abrir votación desde fase de pistas (clues) o reabrir una revotación
+    if (room.round.phase === "clues") {
+      openVoting(room);
+      console.log('[api/open-vote] openVoting() called for clues phase');
+    } else if (room.round.phase === "revote") {
+      // Reabrir revotación: delegar a la función del engine para mantener
+      // la semántica centralizada y evitar toggles manuales.
+      console.log('[api/open-vote] reopening revote via engine.reopenRevote - before:', {
+        phase: room.round.phase,
+        votesCount: room.round.votes.length,
+        votingOpen: (room.round as any).votingOpen,
+      });
+      // Importamos dinámicamente para evitar ciclos en algunos entornos
+      try {
+        const { reopenRevote } = await import('@/lib/game/engine');
+        reopenRevote(room);
+        console.log('[api/open-vote] reopenRevote executed');
+      } catch (err) {
+        console.error('[api/open-vote] failed to call reopenRevote, falling back', err);
+        // Fallback: aplicar manualmente los cambios mínimos
+        room.round.phase = "revote";
+        room.round.votes = [];
+        (room.round as any).votingOpen = true;
+      }
+      console.log('[api/open-vote] reopening revote - after:', {
+        phase: room.round.phase,
+        votesCount: room.round.votes.length,
+        votingOpen: (room.round as any).votingOpen,
+      });
+    } else {
       return NextResponse.json(
         { error: "No se puede abrir votación en esta fase" },
         { status: 400 }
       );
     }
-
-    openVoting(room);
     await saveRoom(room);
+    console.log('[api/open-vote] room saved. broadcasting snapshot will include votingOpen:', room.round.votingOpen);
 
     return NextResponse.json({
       room: toPublicRoom(room, player.id),

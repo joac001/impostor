@@ -47,6 +47,9 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-emerald-400">Impostor</h1>
           <p className="text-sm text-slate-500 mt-1">El juego de deducción social</p>
         </div>
+        <div className="mt-3">
+          <Button variant="ghost" onClick={() => router.push('/como-jugar')} size="sm">Cómo jugar</Button>
+        </div>
       </div>
 
       <Card>
@@ -54,7 +57,7 @@ export default function Home() {
           <div>
             <label className="text-sm font-medium text-slate-200">Tu apodo</label>
             <Input
-              placeholder="Ej: Valeria"
+              placeholder="Ej: Cecilio"
               value={nickname}
               onChange={(e) => {
                 setError(null);
@@ -62,7 +65,11 @@ export default function Home() {
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  hasRoomCode ? handleJoin() : handleCreate();
+                  if (hasRoomCode) {
+                    handleJoin();
+                  } else {
+                    handleCreate();
+                  }
                 }
               }}
             />

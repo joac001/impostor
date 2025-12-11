@@ -41,7 +41,7 @@ export function RoundEndView({ room, isAdmin, onStartNextRound }: RoundEndViewPr
         <h1 className={`text-3xl font-bold ${isImpostorWin ? "text-rose-400" : "text-emerald-400"}`}>
           {isImpostorWin 
             ? "¡Ganó el impostor!" 
-            : "¡Ganaron los aldeanos!"}
+            : "¡Ganaron los no-impostores!"}
         </h1>
         
         <div className="mt-4 space-y-2 text-slate-400">
@@ -87,6 +87,14 @@ export function RoundEndView({ room, isAdmin, onStartNextRound }: RoundEndViewPr
                 disabled={!hasWords}
               >
                 Iniciar siguiente ronda
+              </Button>
+              <Button
+                size="full"
+                variant="ghost"
+                onClick={handleDismiss}
+                className="mt-3"
+              >
+                Continuar
               </Button>
               {!hasWords && (
                 <p className="mt-2 text-xs text-amber-400">

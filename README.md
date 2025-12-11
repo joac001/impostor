@@ -1,9 +1,11 @@
 # Impostor - Reglamento y Guia de Uso
 
 ## Resumen del juego
+
 Juego social por rondas. Cada jugador recibe una palabra secreta o el rol de impostor. Todos ven la categoria de la palabra. En su turno, cada jugador dice en voz alta una palabra relacionada. Luego se vota al impostor. Si es descubierto, puede intentar adivinar la palabra secreta. Se juega varias rondas hasta que el admin decide cerrar la sala y se muestran los puntajes.
 
 ## Reglamento del juego
+
 - Ronda y roles: se elige aleatoriamente quien empieza. La app asigna una palabra secreta a los jugadores no impostores y uno o mas impostores segun configuracion (maximo ceil(jugadores/3)). El autor de la palabra no puede ser impostor en su propia palabra ni si repitio palabra existente.
 - Turnos: sentido horario. Cada turno es una pista verbal; no se escriben pistas en la app.
 - Votacion: al terminar la ronda, todos votan al sospechoso. Si hay empate, se hace un revoto solo entre empatados.
@@ -17,48 +19,96 @@ Juego social por rondas. Cada jugador recibe una palabra secreta o el rol de imp
 - Fin de partida: el admin cierra la sala manualmente; se muestra tabla final de puntajes y ganador.
 
 ## Sistema de puntos
+
 - Impostor acierta la palabra secreta: +2 puntos para el impostor que acerto, +1 para los otros impostores (si los hay).
 - Jugadores descubren al impostor: cada no-impostor gana +1 punto.
 - Jugadores eliminados que no son impostores: no suman puntos.
 - Tabla final: se muestra al cerrar la sala, con el jugador de mayor puntaje como ganador.
 
 ## Reglas de configuracion
+
 - Numero de impostores: maximo ceil(total de jugadores / 3).
 - Admin: es quien crea la sala; puede expulsar jugadores y cerrar la sala. Dirige el inicio de rondas.
 - Reconexiones: un jugador que se desconecta puede volver con el mismo nickname y mantiene su slot y puntos mientras la sala viva.
 
 ## Seguridad y equidad
+
 - La palabra secreta solo se envia a jugadores no impostores.
 - Validaciones server-side: dedupe de palabras, limites de impostores, proteccion de acciones de admin.
 - Evitar trampas: los impostores no reciben la palabra secreta; solo ven la categoria.
 
 ## Guia de uso de la app (SPA Next.js, mobile-first)
-1) Elegir nickname: ingresar nombre para la sesion (no hay autenticacion persistente).
-2) Crear sala (admin): genera una sala con UUID y link compartible. Configura cantidad de impostores.
-3) Unirse a sala: abrir el link y entrar con un nickname. Si es reconexion, usar el mismo nickname para recuperar slot y puntos.
-4) Gestionar diccionario:
+
+1. Elegir nickname: ingresar nombre para la sesion (no hay autenticacion persistente).
+2. Crear sala (admin): genera una sala con UUID y link compartible. Configura cantidad de impostores.
+3. Unirse a sala: abrir el link y entrar con un nickname. Si es reconexion, usar el mismo nickname para recuperar slot y puntos.
+4. Gestionar diccionario:
    - Agregar entradas `palabra:categoria`. La app deduplica y muestra quien es el autor.
    - Palabras duplicadas no se agregan; el jugador que intento duplicar no puede ser impostor en esa ronda.
-5) Iniciar ronda (admin):
+5. Iniciar ronda (admin):
    - La app elige palabra secreta del diccionario y categoria visible.
    - Asigna impostores cumpliendo el limite y exclusiones por autor/duplicado.
    - Selecciona orden aleatorio de turnos y quien empieza.
    - Muestra la palabra secreta solo a no-impostores.
-6) Fase de pistas: cada jugador dice en voz alta una palabra relacionada en su turno (no se escribe en la app).
-7) Votacion:
+6. Fase de pistas: cada jugador dice en voz alta una palabra relacionada en su turno (no se escribe en la app).
+7. Votacion:
    - Todos votan al sospechoso. Si hay empate, se activa revoto entre empatados.
-8) Resolucion:
+8. Resolucion:
    - Si impostor descubierto: el impostor dice en voz alta la palabra; el autor confirma con un boton si acerto.
    - Si impostor no descubierto: el acusado queda fuera de la siguiente ronda.
    - La app asigna puntajes segun el resultado.
-9) Nueva ronda: se puede agregar nuevas palabras y repetir el flujo. Estado y puntajes se mantienen.
-10) Cierre de sala: el admin puede cerrar la sala; se muestra la tabla final con posiciones y puntos.
+9. Nueva ronda: se puede agregar nuevas palabras y repetir el flujo. Estado y puntajes se mantienen.
+10. Cierre de sala: el admin puede cerrar la sala; se muestra la tabla final con posiciones y puntos.
 
 ## Estado y almacenamiento
+
 - Estado centralizado en el servidor (sala en memoria). Limpieza cuando se cierra la sala.
 - Comunicacion en tiempo real via WebSockets puros.
 - Sin base de datos inicial; almacenamiento liviano en memoria mientras la sala viva.
 
 ## Notas
+
 - Todo el contenido esta en español.
 - Sin telemetria. Priorizamos experiencia mobile.
+
+## Despliegue recomendado: Vercel + Upstash (sin servidor adicional)
+
+Esta aplicación funciona en modo "polling" (clientes consultan `/api/rooms/poll`) y guarda el estado en Redis. Para desplegar en producción sin mantener un servidor WebSocket propio te recomiendo usar Vercel para la app y Upstash Redis para persistencia.
+
+Resumen rápido:
+
+- Vercel: aloja la app Next.js (frontend + API routes).
+- Upstash: Redis gestionado (REST). Permite compartir estado entre invocaciones serverless.
+
+Pasos mínimos (resumen):
+
+1. Crear cuenta en https://upstash.com (puedes registrarte con GitHub o email).
+2. En el panel de Upstash crea una nueva base Redis (en el plan gratuito). Copia `REST URL` y `REST TOKEN`.
+3. En Vercel, ve a tu proyecto → Settings → Environment Variables y añade:
+   - `UPSTASH_REDIS_REST_URL` = el REST URL de Upstash
+   - `UPSTASH_REDIS_REST_TOKEN` = el REST token de Upstash
+4. Opcionalmente en Vercel añade `NEXT_PUBLIC_WS_URL` si usas un servidor WebSocket externo o Upstash Realtime.
+5. Deploy en Vercel: conecta tu repo y despliega la rama principal.
+
+Comprobaciones locales (antes de deploy):
+
+- Crea un archivo `.env.local` en la raíz con estas variables:
+
+```
+UPSTASH_REDIS_REST_URL=https://<tu-upstash-url>.upstash.io
+UPSTASH_REDIS_REST_TOKEN=<tu-token>
+```
+
+- Ejecuta la app localmente:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Notas de optimización para el plan gratuito de Upstash:
+
+- El plan gratuito suele incluir 256 MB y ~500k comandos/mes. Cada poll cuenta como 1 comando REST; reducimos el `POLL_INTERVAL` a 3s para bajar consumo.
+- Si querés mejor realtime y cero polling, considera Upstash Realtime o Supabase Realtime y adaptar el cliente para conectarse a ese servicio.
+
+Si querés, puedo generar una guía paso a paso con capturas para crear la base en Upstash y configurar Vercel, o adaptar el código para usar Upstash Realtime y eliminar el polling.

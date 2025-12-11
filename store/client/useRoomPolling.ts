@@ -7,7 +7,7 @@ type Mode = "create" | "join";
 type Status = "idle" | "connecting" | "connected" | "error" | "closed";
 
 const STORAGE_KEY_PREFIX = "impostor_session_";
-const POLL_INTERVAL = 1500; // 1.5 segundos
+const POLL_INTERVAL = 3000; // 3 segundos — reduce consumo en Upstash gratuito
 
 const storageKey = (roomId: string) => `${STORAGE_KEY_PREFIX}${roomId}`;
 

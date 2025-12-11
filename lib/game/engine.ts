@@ -48,6 +48,7 @@ const toPublicRound = (
     secretWord: isImpostor ? undefined : round.secretWord,
     impostorIds: isImpostor ? round.impostorIds : undefined,
     lastVoteResult: round.lastVoteResult,
+    votingOpen: Boolean((round as any).votingOpen),
     totalVotesReceived: currentVotes.length,
     totalVotesNeeded: activeIds.length,
   };
@@ -335,17 +336,35 @@ export const registerVote = (
   const { top } = tallyVotes(currentVotes);
 
   if (top.length > 1 && round.phase === "vote") {
+    // Guardar resultado actual para que los clientes vean los conteos
+    const voteDetails = currentVotes.map((v) => ({ voterId: v.voterId, targetId: v.targetId }));
+    const { counts } = tallyVotes(currentVotes);
+    round.lastVoteResult = {
+      eliminatedId: "",
+      eliminatedNickname: "",
+      wasImpostor: false,
+      voteCount: counts,
+      voteDetails,
+    };
     round.phase = "revote";
     round.revoteCandidates = top;
+    // Reiniciar votos para la revotación
     round.votes = [];
-    round.lastVoteResult = undefined;
     return { state: "revote" };
   }
 
   if (top.length > 1 && round.phase === "revote") {
-    // Empate en revote: seguir votando entre los mismos candidatos
+    // Empate en revote: mantener conteos previos y seguir votando entre los mismos candidatos
+    const voteDetails = currentVotes.map((v) => ({ voterId: v.voterId, targetId: v.targetId }));
+    const { counts } = tallyVotes(currentVotes);
+    round.lastVoteResult = {
+      eliminatedId: "",
+      eliminatedNickname: "",
+      wasImpostor: false,
+      voteCount: counts,
+      voteDetails,
+    };
     round.votes = [];
-    round.lastVoteResult = undefined;
     return { state: "revote" };
   }
 
@@ -405,6 +424,18 @@ export const openVoting = (room: RoomState) => {
   room.round.phase = "vote";
   room.round.votes = [];
   room.round.revoteCandidates = [];
+};
+
+/**
+ * Reabre la votación en una revotación ya activada.
+ * Mantiene los candidatos en `revoteCandidates` y reinicia los votos.
+ */
+export const reopenRevote = (room: RoomState) => {
+  if (!room.round) throw new Error("No hay ronda en curso");
+  if (room.round.phase !== "revote") throw new Error("No está en fase de revotación");
+  // Reiniciar votos y marcar que la votación está abierta para clientes
+  room.round.votes = [];
+  (room.round as any).votingOpen = true;
 };
 
 export const resolveImpostorGuess = (
